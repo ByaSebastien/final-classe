@@ -14,12 +14,14 @@ def banner() -> Panel:
     title = Text("F I N A L   C L A S S E", style="bold cyan", justify="center")
     return Panel(title, subtitle="un mini-RPG pour apprendre la POO", border_style="cyan")
 
+
 def bar(current: int, maximum: int, width: int = 10) -> str:
     """Une jauge en couleur : verte, puis jaune sous la moitié, rouge sous le quart."""
     ratio = current / maximum
     filled = round(width * ratio)
     color = "green" if ratio > 0.5 else "yellow" if ratio > 0.25 else "red"
     return f"[{color}]{'█' * filled}[/][dim]{'░' * (width - filled)}[/]"
+
 
 def hero_sheet(hero: Hero) -> str:
     """La fiche d'un héros : son nom, ses PV, ses PM et ses statistiques."""

@@ -1,10 +1,8 @@
+"""Le déroulement de la partie."""
+
 from final_classe.characters import Hero
-from final_classe.game.display import console, banner, hero_sheet
+from final_classe.game.display import banner, console, hero_sheet
 
-
-def run() -> None:
-    console.print(banner())
-    prologue()
 
 def prologue() -> None:
     """Nibelheim, il y a cinq ans : un duel perdu d'avance."""
@@ -21,3 +19,9 @@ def prologue() -> None:
     console.print(hero_sheet(cloud))
     console.print("\nSephiroth : « Tu n'es qu'une marionnette. »")
     console.print("[italic]Un jour, tu reviendras. Et cette fois, tu seras prêt.[/]")
+
+
+def run() -> None:
+    """Lance la partie."""
+    console.print(banner())
+    prologue()
