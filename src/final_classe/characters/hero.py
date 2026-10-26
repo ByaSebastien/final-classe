@@ -1,5 +1,9 @@
 """Le héros : ses statistiques, ses PV et ses PM."""
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pour l'éditeur seulement : monster.py importe déjà hero.py
+    from final_classe.characters.monster import Monster
 
 class Hero:
     """Un héros de Final Classe."""
@@ -7,6 +11,7 @@ class Hero:
     BASE_HP = 600
     BASE_MP = 60
     DAMAGE_CAP = 9999
+    FIRE_COST = 8
 
     def __init__(self, name: str, strength: int, magic: int, defense: int, resistance: int) -> None:
         if min(strength, magic, defense, resistance) < 1:
@@ -53,7 +58,11 @@ class Hero:
         """La part de PV restante, entre 0 et 1."""
         return self._hp / self.max_hp
 
-    def attack(self, target: Hero) -> int:
+    @property
+    def can_cast_fire(self):
+        return self.mp >= Hero.FIRE_COST
+
+    def attack(self, target: Monster | Hero) -> int:
         """Frappe la cible ; renvoie les PV qu'elle a perdus."""
         damage = self.strength * 10 - target.defense * 5
         damage = max(1, min(Hero.DAMAGE_CAP, damage))
@@ -72,3 +81,11 @@ class Hero:
         gained = min(amount, self.max_hp - self._hp)
         self._hp += gained
         return gained
+
+    def cast_fire(self, target: Monster | Hero) -> int:
+        if not self.can_cast_fire:
+            return 0
+        self._mp -= Hero.FIRE_COST
+        damage = self.magic * 12 - target.resistance * 5
+        damage = max(1,damage)
+        return target.take_damage(damage)

@@ -1,8 +1,13 @@
 """Le déroulement de la partie."""
 
-from final_classe.characters import Hero
+from final_classe.characters import Hero, Monster
+from final_classe.game.battle import fight
+from final_classe.game.creation import create_hero, ask_name
 from final_classe.game.display import banner, console, hero_sheet
 
+def flan(name: str = "Flan") -> Monster:
+    """Un Flan : sa gélatine encaisse les coups, mais craint la magie."""
+    return Monster(name, hp=450, mp=0, strength=14, magic=1, defense=18, resistance=4)
 
 def prologue() -> None:
     """Nibelheim, il y a cinq ans : un duel perdu d'avance."""
@@ -22,6 +27,13 @@ def prologue() -> None:
 
 
 def run() -> None:
-    """Lance la partie."""
+    """Lance la partie : le prologue, la création du héros, puis un premier combat."""
     console.print(banner())
     prologue()
+    console.print("\n[bold]Cinq ans plus tard…[/]")
+    hero = create_hero(ask_name())
+    console.print(hero_sheet(hero))
+    if fight(hero, flan()):
+        console.print("\n[bold green]L'aventure peut commencer ![/]")
+    else:
+        console.print("[bold red]=== Game over ===[/]")
