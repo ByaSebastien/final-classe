@@ -37,11 +37,17 @@ def skill_targets(hero: Hero, heroes: list[Hero], monsters: list[Monster]) -> li
 
 def hero_turn(hero: Hero, heroes: list[Hero], monsters: list[Monster]) -> None:
     """Le tour d'un héros : le joueur choisit son action."""
+    hero.start_turn()
     skill = f"{hero.SKILL_NAME} ({hero.SKILL_COST} PM)"
-    menu = f"[bold]{hero.name}[/] : 1. Attaquer  2. {skill}  3. Potion (x{hero.potions})"
+    potion = f"Potion (x{hero.potions})"
+    menu = f"[bold]{hero.name}[/] : 1. Attaquer  2. {skill}  3. {potion}  4. Se défendre"
     while True:
         console.print(menu)
-        choice = ask_int("> ", 1, 3)
+        choice = ask_int("> ", 1, 4)
+        if choice == 4:
+            hero.defend()
+            console.print(f"{hero.name} se met en garde : les coups reçus sont divisés par deux.")
+            return
         if choice == 1:
             target = choose_target(standing(monsters))
             damage = hero.attack(target)
@@ -78,6 +84,8 @@ def monster_turn(monster: Monster, heroes: list[Hero]) -> None:
         console.print(f"{monster.name} : {hit.action} sur {hit.target.name}, {damage}.")
         if not hit.target.is_alive:
             console.print(f"[red]{hit.target.name} est K.O.[/]")
+    if monster.is_alive and monster.warning:
+        console.print(f"[yellow]{monster.warning}[/]")
 
 
 def fight(heroes: list[Hero], monsters: list[Monster]) -> bool:
@@ -92,7 +100,10 @@ def fight(heroes: list[Hero], monsters: list[Monster]) -> bool:
             console.print(hero_line(hero))
         for monster in standing(monsters):
             console.print(monster_line(monster))
-        for character in sorted([*heroes, *monsters], key=by_speed, reverse=True):
+        order = sorted([*heroes, *monsters], key=by_speed, reverse=True)
+        queue = " → ".join(character.name for character in standing(order))
+        console.print(f"[dim]Ordre du tour : {queue}[/]")  # bonus ★ 2
+        for character in order:
             if not character.is_alive or not standing(heroes) or not standing(monsters):
                 continue
             # Pas une cascade de cas par espèce : on sépare les deux camps.

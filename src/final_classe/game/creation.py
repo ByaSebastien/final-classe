@@ -1,10 +1,41 @@
-from final_classe.characters import Hero, Soldier, BlackMage
+"""La création du héros : son nom, son job, et la répartition de ses points."""
+
+from final_classe.characters import (
+    Archer,
+    BlackMage,
+    Hero,
+    Knight,
+    Monk,
+    Ninja,
+    Samurai,
+    Soldier,
+    Thief,
+)
 from final_classe.game.display import console
 
-POINTS = 20
-BASE_STAT = 10
+POINTS = 20  # les points à répartir
+BASE_STAT = 10  # la valeur de départ de chaque statistique
+# Des classes, rangées dans une liste. Les trois dernières : bonus ★★ 3 et ★★ 4.
+JOBS: list[type[Hero]] = [Soldier, BlackMage, Knight, Monk, Thief, Samurai, Archer, Ninja]
 
-JOBS: list[type[Hero]] = [Soldier, BlackMage]  # des classes, rangées dans une liste
+
+def ask_int(prompt: str, low: int, high: int) -> int:
+    """Demande un nombre entre low et high, jusqu'à obtenir une réponse valide."""
+    while True:
+        answer = input(prompt).strip()
+        if answer.isdigit() and low <= int(answer) <= high:
+            return int(answer)
+        console.print(f"[red]Un nombre entre {low} et {high}, s'il vous plaît.[/]")
+
+
+def ask_name() -> str:
+    """Demande le nom du héros, jusqu'à obtenir un nom non vide."""
+    while True:
+        name = input("Nom de votre héros : ").strip()
+        if name:
+            return name.title()
+        console.print("[red]Un héros a besoin d'un nom.[/]")
+
 
 def choose_job() -> type[Hero]:
     """Le menu des jobs, construit à partir des classes : renvoie la classe choisie."""
@@ -15,25 +46,6 @@ def choose_job() -> type[Hero]:
         )
     return JOBS[ask_int("Votre job : ", 1, len(JOBS)) - 1]
 
-def ask_int(prompt: str, low: int, high: int) -> int:
-
-    answer = input(prompt)
-
-    while not answer.isdigit() or int(answer) not in range(low,high+1):
-        console.print(f"[red]Un nombre entre {low} et {high}, s'il vous plaît.[/]")
-        answer = input(prompt)
-
-    return int(answer)
-
-def ask_name() -> str:
-
-    name = ''
-
-    while not name:
-        console.print("[red]Un héros a besoin d'un nom.[/]")
-        name = input("Nom de votre héro : ").strip()
-
-    return name.title()
 
 def create_hero(name: str) -> Hero:
     """Le job, puis les points entre FOR, MAG et DÉF ; la RÉS reçoit le reste."""

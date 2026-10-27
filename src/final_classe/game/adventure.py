@@ -1,9 +1,21 @@
 """Le déroulement de la partie."""
 
-from final_classe.characters import BlackMage, Flan, Hero, Monster, Sephiroth, Soldier, Wolf
+from final_classe.characters import (
+    Ahriman,
+    Bomb,
+    Cactuar,
+    Flan,
+    Hero,
+    Malboro,
+    Monster,
+    Sephiroth,
+    Soldier,
+    Wolf,
+)
 from final_classe.game.battle import fight
 from final_classe.game.creation import ask_name, create_hero
 from final_classe.game.display import banner, console, hero_sheet
+from final_classe.game.recruit import recruit
 
 
 def prologue() -> None:
@@ -24,9 +36,12 @@ def prologue() -> None:
 
 
 def reward(heroes: list[Hero], monsters: list[Monster]) -> None:
-    """L'XP va à chaque héros debout ; les gils, au héros du joueur."""
+    """L'XP va à chaque héros debout ; les gils, et ceux volés, au héros du joueur."""
     xp = sum(monster.xp for monster in monsters)
     gil = sum(monster.gil for monster in monsters)
+    for hero in heroes[1:]:  # les gils volés par un compagnon rejoignent la bourse commune
+        gil += hero.gil
+        hero.gil = 0
     heroes[0].gil += gil
     console.print(f"Butin : [yellow]+{xp} XP[/] pour chaque héros debout, [yellow]+{gil} gils[/]")
     for hero in heroes:
@@ -34,24 +49,39 @@ def reward(heroes: list[Hero], monsters: list[Monster]) -> None:
             console.print(f"[bold yellow]{hero.name} passe au niveau {hero.level} ![/]")
 
 
-def run() -> None:
-    """Lance la partie : le prologue, la création du héros, puis les Plaines de Dalmasca."""
-    console.print(banner())
-    prologue()
-    console.print("\n[bold]Cinq ans plus tard…[/]")
-    hero = create_hero(ask_name())
-    lulu = BlackMage("Lulu", strength=10, magic=22, defense=12, resistance=16)
-    heroes = [hero, lulu]
-    for member in heroes:
-        console.print(hero_sheet(member))
-    console.print("\n[bold cyan]=== Les Plaines de Dalmasca ===[/]")
-    waves = [[Flan()], [Wolf("Loup A"), Wolf("Loup B")], [Flan(), Wolf()]]
+def cross(zone: str, heroes: list[Hero], waves: list[list[Monster]]) -> bool:
+    """Traverse une zone, vague après vague ; renvoie False si l'équipe tombe."""
+    console.print(f"\n[bold cyan]=== {zone} ===[/]")
     for monsters in waves:
         if not fight(heroes, monsters):
             console.print("[bold red]=== Game over ===[/]")
-            return
+            return False
         reward(heroes, monsters)
-        for member in heroes:
-            member.rest()
+        for hero in heroes:
+            hero.rest()
         console.print("L'équipe se repose : PV et PM au maximum.")
-    console.print("\n[bold green]Les Plaines de Dalmasca sont traversées ![/]")
+    console.print(f"\n[bold green]{zone} : traversée ![/]")
+    return True
+
+
+def run() -> None:
+    """Le prologue, la création du héros, le recrutement, puis deux zones."""
+    console.print(banner())
+    prologue()
+    console.print("\n[bold]Cinq ans plus tard…[/]")
+    heroes = recruit(create_hero(ask_name()))
+    for hero in heroes:
+        console.print(hero_sheet(hero))
+    plains: list[list[Monster]] = [
+        [Flan()],
+        [Wolf("Loup A"), Wolf("Loup B")],
+        [Flan(), Wolf("Loup alpha", hp=600, strength=20)],  # bonus ★★★ 5 : **kwargs
+    ]
+    forest: list[list[Monster]] = [
+        [Bomb(), Ahriman()],
+        [Cactuar()],
+        [Bomb("Bombo A"), Bomb("Bombo B"), Ahriman()],
+        [Malboro()],
+    ]
+    if cross("Les Plaines de Dalmasca", heroes, plains):
+        cross("La Forêt de Macalania", heroes, forest)

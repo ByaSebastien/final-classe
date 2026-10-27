@@ -1,7 +1,10 @@
+"""Character : tout ce que les héros et les monstres partagent."""
+
 from abc import ABC, abstractmethod
 
 
 class Character(ABC):
+    """Un combattant de Final Classe : un héros ou un monstre."""
 
     DAMAGE_CAP = 9999
 
@@ -32,47 +35,52 @@ class Character(ABC):
 
     @property
     @abstractmethod
-    def title(self):
+    def title(self) -> str:
         """Ce qui s'affiche après le nom : le job du héros, ou « Monstre »."""
 
     @property
     def hp(self) -> int:
+        """Les PV actuels : en lecture seule."""
         return self._hp
 
     @property
     def mp(self) -> int:
+        """Les PM actuels : en lecture seule."""
         return self._mp
 
     @property
     def is_alive(self) -> bool:
-        return self.hp > 0
+        """Vrai tant qu'il reste des PV."""
+        return self._hp > 0
 
     @property
     def hp_ratio(self) -> float:
-        return self.hp / self.max_hp
+        """La part de PV restante, entre 0 et 1."""
+        return self._hp / self.max_hp
 
-    def strike(self, target: Character, damage) -> int:
-        damage = max(1,min(self.DAMAGE_CAP, damage))
+    def strike(self, target: Character, damage: int) -> int:
+        """Inflige des dégâts bornés entre 1 et 9999 ; renvoie les PV perdus par la cible."""
+        damage = max(1, min(Character.DAMAGE_CAP, damage))
         return target.take_damage(damage)
 
-    def attack(self,target: Character) -> int:
-        if not self.is_alive:
-            return 0
+    def attack(self, target: Character) -> int:
+        """L'attaque physique : la FOR contre la DÉF de la cible."""
         return self.strike(target, self.strength * 10 - target.defense * 5)
 
-    def magic_damage(self, target: Character, power: int) -> int:
-        if not self.is_alive:
-            return 0
+    def magic_attack(self, target: Character, power: int) -> int:
+        """L'attaque magique : la MAG contre la RÉS de la cible."""
         return self.strike(target, self.magic * power - target.resistance * 5)
 
     def take_damage(self, amount: int) -> int:
-        lost = min(amount, self.hp)
+        """Retire des PV, sans descendre sous 0 ; renvoie les PV réellement perdus."""
+        lost = min(amount, self._hp)
         self._hp -= lost
         return lost
 
     def heal(self, amount: int) -> int:
+        """Rend des PV à un personnage debout, sans dépasser le maximum ; renvoie les PV rendus."""
         if not self.is_alive:
             return 0
-        gained = min(amount,self.max_hp - self.hp)
+        gained = min(amount, self.max_hp - self._hp)
         self._hp += gained
         return gained

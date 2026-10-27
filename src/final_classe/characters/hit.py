@@ -1,6 +1,6 @@
 """Hit : un coup porté pendant un combat."""
 
-from final_classe.characters.character import Character
+from final_classe.characters.base import Character
 
 
 class Hit:

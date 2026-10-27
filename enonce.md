@@ -31,12 +31,12 @@ Réexportez `Monster` dans `characters/__init__.py`.
 
 `Hero.attack` doit maintenant viser un héros **ou** un monstre : annotez `target: Hero | Monster`.
 
-> 💡 `monster.py` importe `Hero`. `hero.py` ne peut donc pas importer `Monster` à son tour : les deux modules s'importeraient l'un l'autre. On importe `Monster` **pour l'éditeur seulement** :
+> 💡 `monsters.py` importe `Hero`. `heroes.py` ne peut donc pas importer `Monster` à son tour : les deux modules s'importeraient l'un l'autre. On importe `Monster` **pour l'éditeur seulement** :
 > ```python
 > from typing import TYPE_CHECKING
 >
-> if TYPE_CHECKING:  # pour l'éditeur seulement : monster.py importe déjà hero.py
->     from final_classe.characters.monster import Monster
+> if TYPE_CHECKING:  # pour l'éditeur seulement : monsters.py importe déjà heroes.py
+>     from final_classe.characters.monsters import Monster
 > ```
 > Au jour 2, une classe mère commune nous en débarrassera.
 
