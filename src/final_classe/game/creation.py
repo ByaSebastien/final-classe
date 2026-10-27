@@ -1,8 +1,19 @@
-from final_classe.characters import Hero
+from final_classe.characters import Hero, Soldier, BlackMage
 from final_classe.game.display import console
 
 POINTS = 20
 BASE_STAT = 10
+
+JOBS: list[type[Hero]] = [Soldier, BlackMage]  # des classes, rangées dans une liste
+
+def choose_job() -> type[Hero]:
+    """Le menu des jobs, construit à partir des classes : renvoie la classe choisie."""
+    for number, job in enumerate(JOBS, start=1):
+        console.print(
+            f"  {number}. {job.JOB_NAME:<10} PV {job.BASE_HP}  PM {job.BASE_MP}  "
+            f"VIT {job.SPEED}  compétence : {job.SKILL_NAME}"
+        )
+    return JOBS[ask_int("Votre job : ", 1, len(JOBS)) - 1]
 
 def ask_int(prompt: str, low: int, high: int) -> int:
 
@@ -25,7 +36,8 @@ def ask_name() -> str:
     return name.title()
 
 def create_hero(name: str) -> Hero:
-    """Répartit les points entre FOR, MAG et DÉF ; la RÉS reçoit le reste."""
+    """Le job, puis les points entre FOR, MAG et DÉF ; la RÉS reçoit le reste."""
+    job = choose_job()
     console.print(f"Chaque statistique vaut {BASE_STAT}. Répartissez {POINTS} points.")
     remaining = POINTS
     bonus: dict[str, int] = {}
@@ -35,7 +47,7 @@ def create_hero(name: str) -> Hero:
         remaining -= points
     bonus["RÉS"] = remaining
     console.print(f"RÉS reçoit les {remaining} points restants.")
-    return Hero(
+    return job(
         name,
         strength=BASE_STAT + bonus["FOR"],
         magic=BASE_STAT + bonus["MAG"],

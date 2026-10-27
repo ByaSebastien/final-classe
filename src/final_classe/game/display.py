@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from final_classe.characters import Hero, Monster
+from final_classe.characters import Character, Hero
 
 console = Console()
 
@@ -24,15 +24,22 @@ def bar(current: int, maximum: int, width: int = 10) -> str:
 
 
 def hero_sheet(hero: Hero) -> str:
-    """La fiche d'un héros : son nom, ses PV, ses PM et ses statistiques."""
+    """La fiche complète d'un héros : son job, son niveau, ses PV, ses PM et ses statistiques."""
     return (
-        f"[bold]{hero.name}[/]\n"
+        f"[bold]{hero.name}[/] ({hero.title}, niveau {hero.level})\n"
         f"  PV {hero.hp:>4}/{hero.max_hp:<4} {bar(hero.hp, hero.max_hp)}\n"
         f"  PM {hero.mp:>4}/{hero.max_mp:<4} {bar(hero.mp, hero.max_mp)}\n"
-        f"  FOR {hero.strength}  MAG {hero.magic}  DÉF {hero.defense}  RÉS {hero.resistance}"
+        f"  FOR {hero.strength}  MAG {hero.magic}  DÉF {hero.defense}  "
+        f"RÉS {hero.resistance}  VIT {hero.speed}"
     )
 
-def monster_line(monster: Monster):
+def hero_line(hero: Hero) -> str:
+    """Une ligne pour un héros, pendant le combat."""
+    name = f"{hero.name} ({hero.title})"
+    hp = f"PV {hero.hp:>4}/{hero.max_hp:<4} {bar(hero.hp, hero.max_hp)}"
+    return f"[bold]{name:<22}[/] {hp}  PM {hero.mp:>3}/{hero.max_mp:<3}"
+
+def monster_line(monster: Character) -> str:
     """Une ligne pour un monstre : son nom et sa jauge de PV."""
     gauge = bar(monster.hp, monster.max_hp)
-    return f"[bold red]{monster.name:<8}[/] PV {monster.hp:>4}/{monster.max_hp:<4} {gauge}"
+    return f"[bold red]{monster.name:<22}[/] PV {monster.hp:>4}/{monster.max_hp:<4} {gauge}"
