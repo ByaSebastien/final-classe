@@ -23,6 +23,7 @@ from final_classe.characters.jobs import (
     Thief,
 )
 from final_classe.characters.monsters import Monster
+from final_classe.characters.party import Party
 
 __all__ = [
     "Ahriman",
@@ -39,6 +40,7 @@ __all__ = [
     "Monk",
     "Monster",
     "Ninja",
+    "Party",
     "Samurai",
     "Sephiroth",
     "Soldier",

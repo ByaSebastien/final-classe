@@ -24,13 +24,15 @@ def bar(current: int, maximum: int, width: int = 10) -> str:
 
 
 def hero_sheet(hero: Hero) -> str:
-    """La fiche complète d'un héros : son job, son niveau, ses PV, ses PM et ses statistiques."""
+    """La fiche complète d'un héros : job, niveau, PV, PM, statistiques et équipement."""
+    gear = ", ".join(item.name for item in hero.equipment) or "rien"
     return (
         f"[bold]{hero.name}[/] ({hero.title}, niveau {hero.level})\n"
         f"  PV {hero.hp:>4}/{hero.max_hp:<4} {bar(hero.hp, hero.max_hp)}\n"
         f"  PM {hero.mp:>4}/{hero.max_mp:<4} {bar(hero.mp, hero.max_mp)}\n"
         f"  FOR {hero.strength}  MAG {hero.magic}  DÉF {hero.defense}  "
-        f"RÉS {hero.resistance}  VIT {hero.speed}"
+        f"RÉS {hero.resistance}  VIT {hero.speed}\n"
+        f"  Équipement : {gear}"
     )
 
 def hero_line(hero: Hero) -> str:

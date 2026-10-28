@@ -22,11 +22,11 @@ class Character(ABC):
         if min(hp, strength, magic, defense, resistance, speed) < 1:
             raise ValueError("Chaque statistique vaut au moins 1")
         self.name = name
-        self.strength = strength
-        self.magic = magic
-        self.defense = defense
-        self.resistance = resistance
-        self.speed = speed
+        self._strength = strength
+        self._magic = magic
+        self._defense = defense
+        self._resistance = resistance
+        self._speed = speed
         self.max_hp = hp
         self.max_mp = mp
         self._hp = hp
@@ -37,6 +37,26 @@ class Character(ABC):
     @abstractmethod
     def title(self) -> str:
         """Ce qui s'affiche après le nom : le job du héros, ou « Monstre »."""
+
+    @property
+    def strength(self) -> int:
+        return self._strength
+
+    @property
+    def magic(self) -> int:
+        return self._magic
+
+    @property
+    def defense(self) -> int:
+        return self._defense
+
+    @property
+    def resistance(self) -> int:
+        return self._resistance
+
+    @property
+    def speed(self) -> int:
+        return self._speed
 
     @property
     def hp(self) -> int:
@@ -84,3 +104,6 @@ class Character(ABC):
         gained = min(amount, self.max_hp - self._hp)
         self._hp += gained
         return gained
+
+    def lower_defense(self) -> None:
+        self._defense = max(1, self.defense // 2)

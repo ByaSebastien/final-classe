@@ -56,7 +56,7 @@ class Knight(Hero):
     def skill_effect(self, target: Character) -> int:
         """Une attaque, puis la DÉF de la cible est divisée par deux."""
         damage = self.attack(target)
-        target.defense = max(1, target.defense // 2)  # comme à la création : au moins 1
+        target.lower_defense()  # comme à la création : au moins 1
         return damage
 
 

@@ -1,9 +1,10 @@
 """Hero : un héros a toujours un job, qui fixe ses PV, ses PM, sa VIT et sa compétence."""
 
 from abc import abstractmethod
-from typing import override
+from typing import override, List
 
 from final_classe.characters.base import Character
+from final_classe.items import Equipment, equipment
 
 
 class Hero(Character):
@@ -27,6 +28,8 @@ class Hero(Character):
         self.level = 1
         self.xp = 0
         self.guarding = False  # en garde : les coups reçus sont divisés par deux
+        self.weapon: Equipment | None = None
+        self.armor: Equipment | None = None
 
     @property
     def name(self) -> str:
@@ -46,6 +49,31 @@ class Hero(Character):
         return self.JOB_NAME
 
     @property
+    @override
+    def strength(self) -> int:
+        return super().strength + sum(item.strength for item in self.equipment)
+
+    @property
+    @override
+    def magic(self):
+        return super().magic + sum(item.magic for item in self.equipment)
+
+    @property
+    @override
+    def defense(self):
+        return super().defense + sum(item.defense for item in self.equipment)
+
+    @property
+    @override
+    def resistance(self):
+        return super().resistance + sum(item.resistance for item in self.equipment)
+
+    @property
+    @override
+    def speed(self):
+        return super().speed + sum(item.speed for item in self.equipment)
+
+    @property
     def can_use_skill(self) -> bool:
         """Vrai s'il reste assez de PM pour la compétence."""
         return self._mp >= self.SKILL_COST
@@ -54,6 +82,10 @@ class Hero(Character):
     def xp_to_next(self) -> int:
         """L'XP qu'il faut pour passer au niveau suivant."""
         return self.level * 100
+
+    @property
+    def equipment(self) -> List[Equipment]:
+        return [item for item in (self.armor,self.weapon) if item is not None]
 
     def use_skill(self, *targets: Character) -> int:
         """La méthode modèle : paie les PM une fois, puis applique l'effet à chaque cible."""
@@ -102,11 +134,23 @@ class Hero(Character):
             self.level += 1
             self.max_hp += 100
             self.max_mp += 10
-            self.strength += 3
-            self.magic += 3
-            self.defense += 3
-            self.resistance += 3
+            self._strength += 3
+            self._magic += 3
+            self._defense += 3
+            self._resistance += 3
             levels += 1
         if levels:  # un nouveau niveau remet les PV et les PM au maximum
             self.rest()
         return levels
+
+    def equip(self, item: Equipment):
+
+        match item.slot:
+            case "arme":
+                previous = self.weapon
+                self.weapon = item
+            case _:
+                previous = self.armor
+                self.armor = item
+
+        return previous
