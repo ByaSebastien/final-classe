@@ -35,11 +35,13 @@ def hero_sheet(hero: Hero) -> str:
         f"  Équipement : {gear}"
     )
 
+
 def hero_line(hero: Hero) -> str:
     """Une ligne pour un héros, pendant le combat."""
     name = f"{hero.name} ({hero.title})"
     hp = f"PV {hero.hp:>4}/{hero.max_hp:<4} {bar(hero.hp, hero.max_hp)}"
     return f"[bold]{name:<22}[/] {hp}  PM {hero.mp:>3}/{hero.max_mp:<3}"
+
 
 def monster_line(monster: Character) -> str:
     """Une ligne pour un monstre : son nom et sa jauge de PV."""

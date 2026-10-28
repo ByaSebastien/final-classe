@@ -25,9 +25,9 @@ def recruits() -> list[Hero]:
         Knight("Basch", strength=17, magic=10, defense=20, resistance=13),
         Monk("Amarant", strength=18, magic=16, defense=14, resistance=12),
         Thief("Djidane", strength=19, magic=12, defense=13, resistance=16),
-        Samurai("Auron", strength=21, magic=10, defense=17, resistance=12),  # bonus ★★ 3
-        Archer("Fran", strength=18, magic=14, defense=12, resistance=16),  # bonus ★★ 3
-        Ninja("Youfie", strength=19, magic=12, defense=12, resistance=17),  # bonus ★★ 4
+        Samurai("Auron", strength=21, magic=10, defense=17, resistance=12),
+        Archer("Fran", strength=18, magic=14, defense=12, resistance=16),
+        Ninja("Youfie", strength=19, magic=12, defense=12, resistance=17),
     ]
 
 

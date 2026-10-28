@@ -4,6 +4,7 @@ from typing import override
 
 from final_classe.characters.base import Character
 from final_classe.characters.heroes import Hero
+from final_classe.items import Potion
 
 
 class Soldier(Hero):
@@ -56,7 +57,7 @@ class Knight(Hero):
     def skill_effect(self, target: Character) -> int:
         """Une attaque, puis la DÉF de la cible est divisée par deux."""
         damage = self.attack(target)
-        target.lower_defense()  # comme à la création : au moins 1
+        target.lower_defense()
         return damage
 
 
@@ -87,7 +88,7 @@ class Thief(Hero):
     JOB_NAME = "Voleur"
     SKILL_NAME = "Vol"
     SKILL_COST = 4
-    SKILL_TEXT = "{user} vole {value} gils à {target}."
+    SKILL_TEXT = "{user} vole {value} gils à {target}, et une potion s'il en a trouvé."
 
     @override
     def skill_effect(self, target: Character) -> int:
@@ -95,11 +96,13 @@ class Thief(Hero):
         stolen = target.gil
         target.gil = 0
         self.gil += stolen
+        if stolen > 0:  # bonus ★ 2 : une bourse pleine cache souvent une potion
+            self.loot.append(Potion())
         return stolen
 
 
 class Samurai(Hero):
-    """Bonus ★★ 3. Le Samouraï : lent, mais sa Lame bannie traverse les armures."""
+    """Le Samouraï : lent, mais sa Lame bannie traverse les armures."""
 
     BASE_HP = 760
     BASE_MP = 40
@@ -115,7 +118,7 @@ class Samurai(Hero):
 
 
 class Archer(Hero):
-    """Bonus ★★ 3. L'Archer : son Tir précis ignore la DÉF."""
+    """L'Archer : son Tir précis ignore la DÉF."""
 
     BASE_HP = 580
     BASE_MP = 50
@@ -131,7 +134,7 @@ class Archer(Hero):
 
 
 class Ninja(Hero):
-    """Bonus ★★ 4. Le Ninja : le plus rapide, et ses shurikens touchent tous les ennemis."""
+    """Le Ninja : le plus rapide, et ses shurikens touchent tous les ennemis."""
 
     BASE_HP = 560
     BASE_MP = 50

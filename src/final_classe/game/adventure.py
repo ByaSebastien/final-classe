@@ -2,21 +2,25 @@
 
 from final_classe.characters import (
     Ahriman,
+    Behemoth,
     Bomb,
     Cactuar,
     Flan,
-    Hero,
+    Golem,
     Malboro,
     Monster,
+    Party,
     Sephiroth,
     Soldier,
-    Wolf, Party,
+    Tonberry,
+    Wolf,
 )
 from final_classe.game.battle import fight
 from final_classe.game.creation import ask_name, create_hero
 from final_classe.game.display import banner, console, hero_sheet
+from final_classe.game.preparation import prepare
 from final_classe.game.recruit import recruit
-from final_classe.items import catalog
+from final_classe.items import Elixir, Ether, PhoenixDown, catalog
 
 
 def prologue() -> None:
@@ -52,7 +56,7 @@ def cross(zone: str, party: Party, waves: list[list[Monster]]) -> bool:
     """Traverse une zone, vague après vague ; renvoie False si l'équipe tombe."""
     console.print(f"\n[bold cyan]=== {zone} ===[/]")
     for monsters in waves:
-        if not fight(party.heroes, monsters):
+        if not fight(party, monsters):
             console.print("[bold red]=== Game over ===[/]")
             return False
         reward(party, monsters)
@@ -62,8 +66,26 @@ def cross(zone: str, party: Party, waves: list[list[Monster]]) -> bool:
     return True
 
 
+def equip_starters(party: Party) -> None:
+    """Avant la Forêt : une arme et une armure pour chacun, selon sa meilleure statistique."""
+    for hero in party.heroes:
+        hero.equip(catalog.rod() if hero.magic > hero.strength else catalog.bronze_sword())
+        hero.equip(catalog.leather_armor())
+        console.print(hero_sheet(hero))
+
+
+def open_chest(party: Party) -> None:
+    """À l'entrée de la Grotte, un coffre : de l'équipement, des materias et des objets."""
+    party.bag.extend([catalog.mythril_sword(), catalog.mythril_rod(), catalog.mythril_armor()])
+    party.bag.append(catalog.ribbon())  # bonus ★ 1
+    party.materias.extend([catalog.fire(), catalog.ice(), catalog.thunder(), catalog.cure()])
+    party.materias.extend([catalog.ifrit(), catalog.shiva(), catalog.ramuh()])  # bonus ★★ 3
+    party.items.extend([Ether(), Ether(), PhoenixDown(), Elixir()])
+    console.print("\n[bold yellow]Un coffre ! Équipement, materias et objets rejoignent le sac.[/]")
+
+
 def run() -> None:
-    """Le prologue, la création du héros, le recrutement, puis deux zones."""
+    """Le prologue, la création du héros, le recrutement, puis trois zones."""
     console.print(banner())
     prologue()
     console.print("\n[bold]Cinq ans plus tard…[/]")
@@ -85,11 +107,14 @@ def run() -> None:
         return
     console.print("\nUn marchand ambulant vous offre de quoi vous équiper :")
     equip_starters(party)
-    cross("La Forêt de Macalania", party, forest)
-
-def equip_starters(party: Party) -> None:
-    """Avant la Forêt : une arme et une armure pour chacun, selon sa meilleure statistique."""
-    for hero in party.heroes:
-        hero.equip(catalog.rod() if hero.magic > hero.strength else catalog.bronze_sword())
-        hero.equip(catalog.leather_armor())
-        console.print(hero_sheet(hero))
+    if not cross("La Forêt de Macalania", party, forest):
+        return
+    open_chest(party)
+    prepare(party)
+    cave: list[list[Monster]] = [
+        [Tonberry()],
+        [Golem(), Golem("Golem B")],
+        [Tonberry(), Golem()],
+        [Behemoth()],
+    ]
+    cross("La Grotte des cristaux", party, cave)

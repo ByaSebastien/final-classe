@@ -40,22 +40,27 @@ class Character(ABC):
 
     @property
     def strength(self) -> int:
+        """La Force (FOR) : en lecture seule."""
         return self._strength
 
     @property
     def magic(self) -> int:
+        """La Magie (MAG) : en lecture seule."""
         return self._magic
 
     @property
     def defense(self) -> int:
+        """La Défense (DÉF) : en lecture seule."""
         return self._defense
 
     @property
     def resistance(self) -> int:
+        """La Résistance (RÉS) : en lecture seule."""
         return self._resistance
 
     @property
     def speed(self) -> int:
+        """La Vitesse (VIT) : en lecture seule."""
         return self._speed
 
     @property
@@ -87,9 +92,18 @@ class Character(ABC):
         """L'attaque physique : la FOR contre la DÉF de la cible."""
         return self.strike(target, self.strength * 10 - target.defense * 5)
 
-    def magic_attack(self, target: Character, power: int) -> int:
-        """L'attaque magique : la MAG contre la RÉS de la cible."""
-        return self.strike(target, self.magic * power - target.resistance * 5)
+    def magic_attack(self, target: Character, power: int, element: str | None = None) -> int:
+        """L'attaque magique : la MAG contre la RÉS de la cible, doublée sur sa faiblesse."""
+        damage = self.magic * power - target.resistance * 5
+        return self.strike(target, damage * target.damage_multiplier(element))
+
+    def damage_multiplier(self, element: str | None) -> int:
+        """Bonus ★★ 4 : le multiplicateur des dégâts d'un élément ; aucune faiblesse par défaut."""
+        return 1
+
+    def lower_defense(self) -> None:
+        """Divise la DÉF par deux, sans descendre sous 1 : c'est Brise-armure."""
+        self._defense = max(1, self._defense // 2)
 
     def take_damage(self, amount: int) -> int:
         """Retire des PV, sans descendre sous 0 ; renvoie les PV réellement perdus."""
@@ -105,5 +119,17 @@ class Character(ABC):
         self._hp += gained
         return gained
 
-    def lower_defense(self) -> None:
-        self._defense = max(1, self.defense // 2)
+    def restore_mp(self, amount: int) -> int:
+        """Rend des PM à un personnage debout, sans dépasser le maximum ; renvoie les PM rendus."""
+        if not self.is_alive:
+            return 0
+        gained = min(amount, self.max_mp - self._mp)
+        self._mp += gained
+        return gained
+
+    def revive(self) -> int:
+        """Relève un personnage K.O. avec la moitié de ses PV ; renvoie les PV rendus."""
+        if self.is_alive:
+            return 0
+        self._hp = self.max_hp // 2
+        return self._hp

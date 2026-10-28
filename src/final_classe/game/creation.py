@@ -15,7 +15,7 @@ from final_classe.game.display import console
 
 POINTS = 20  # les points à répartir
 BASE_STAT = 10  # la valeur de départ de chaque statistique
-# Des classes, rangées dans une liste. Les trois dernières : bonus ★★ 3 et ★★ 4.
+# Des classes, rangées dans une liste.
 JOBS: list[type[Hero]] = [Soldier, BlackMage, Knight, Monk, Thief, Samurai, Archer, Ninja]
 
 
@@ -61,8 +61,8 @@ def create_hero(name: str) -> Hero:
     console.print(f"RÉS reçoit les {remaining} points restants.")
     return job(
         name,
-        strength=BASE_STAT + bonus["FOR"],
-        magic=BASE_STAT + bonus["MAG"],
-        defense=BASE_STAT + bonus["DÉF"],
-        resistance=BASE_STAT + bonus["RÉS"],
+        strength= 999 if name == 'Dante' else BASE_STAT + bonus["FOR"],
+        magic= 999 if name == 'Dante' else BASE_STAT + bonus["MAG"],
+        defense= 999 if name == 'Dante' else BASE_STAT + bonus["DÉF"],
+        resistance=999 if name == 'Dante' else BASE_STAT + bonus["RÉS"],
     )

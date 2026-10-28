@@ -1,10 +1,10 @@
 """Hero : un héros a toujours un job, qui fixe ses PV, ses PM, sa VIT et sa compétence."""
 
 from abc import abstractmethod
-from typing import override, List
+from typing import override
 
 from final_classe.characters.base import Character
-from final_classe.items import Equipment, equipment
+from final_classe.items import Equipment, Materia, Usable
 
 
 class Hero(Character):
@@ -18,18 +18,18 @@ class Hero(Character):
     SKILL_COST = 0
     SKILL_TARGET = "ennemi"  # « ennemi », « allié », ou « ennemis » : tous les ennemis
     SKILL_TEXT = "{user} utilise {skill} sur {target} : {value} dégâts."
-    POTION_HEAL = 200
 
     def __init__(self, name: str, strength: int, magic: int, defense: int, resistance: int) -> None:
         super().__init__(
             name, self.BASE_HP, self.BASE_MP, strength, magic, defense, resistance, self.SPEED
         )
-        self.potions = 3
         self.level = 1
         self.xp = 0
         self.guarding = False  # en garde : les coups reçus sont divisés par deux
-        self.weapon: Equipment | None = None
-        self.armor: Equipment | None = None
+        self.weapon: Equipment | None = None  # le héros A UNE arme…
+        self.armor: Equipment | None = None  # … et A UNE armure
+        self.accessory: Equipment | None = None  # bonus ★ 1 : … et un accessoire
+        self.loot: list[Usable] = []  # bonus ★ 2 : les objets volés, jusqu'au butin
 
     @property
     def name(self) -> str:
@@ -49,28 +49,67 @@ class Hero(Character):
         return self.JOB_NAME
 
     @property
+    def equipment(self) -> list[Equipment]:
+        """Les pièces portées."""
+        pieces = (self.weapon, self.armor, self.accessory)
+        return [item for item in pieces if item is not None]
+
+    def equip(self, item: Equipment) -> Equipment | None:
+        """Range la pièce à son emplacement ; renvoie celle qu'elle remplace, ou None."""
+        if item.slot == "arme":
+            previous = self.weapon
+            self.weapon = item
+        elif item.slot == "accessoire":  # bonus ★ 1
+            previous = self.accessory
+            self.accessory = item
+        else:
+            previous = self.armor
+            self.armor = item
+        return previous
+
+    @property
+    def spells(self) -> list[Materia]:
+        """Les sorts du héros : les materias montées sur son équipement.
+
+        L'appelant demande hero.spells ; il n'a pas à savoir que les sorts viennent
+        des materias, montées sur les pièces d'équipement.
+        """
+        spells: list[Materia] = []
+        for item in self.equipment:
+            spells.extend(item.materias)
+        return spells
+
+    # Chaque statistique : la valeur de base, plus les bonus de l'équipement.
+    # Cinq fois le même calcul : le jour 4 nous en débarrassera.
+
+    @property
     @override
     def strength(self) -> int:
+        """La FOR : la base, plus l'équipement."""
         return super().strength + sum(item.strength for item in self.equipment)
 
     @property
     @override
-    def magic(self):
+    def magic(self) -> int:
+        """La MAG : la base, plus l'équipement."""
         return super().magic + sum(item.magic for item in self.equipment)
 
     @property
     @override
-    def defense(self):
+    def defense(self) -> int:
+        """La DÉF : la base, plus l'équipement."""
         return super().defense + sum(item.defense for item in self.equipment)
 
     @property
     @override
-    def resistance(self):
+    def resistance(self) -> int:
+        """La RÉS : la base, plus l'équipement."""
         return super().resistance + sum(item.resistance for item in self.equipment)
 
     @property
     @override
-    def speed(self):
+    def speed(self) -> int:
+        """La VIT : la base, plus l'équipement."""
         return super().speed + sum(item.speed for item in self.equipment)
 
     @property
@@ -83,10 +122,6 @@ class Hero(Character):
         """L'XP qu'il faut pour passer au niveau suivant."""
         return self.level * 100
 
-    @property
-    def equipment(self) -> List[Equipment]:
-        return [item for item in (self.armor,self.weapon) if item is not None]
-
     def use_skill(self, *targets: Character) -> int:
         """La méthode modèle : paie les PM une fois, puis applique l'effet à chaque cible."""
         if not self.can_use_skill:
@@ -97,6 +132,17 @@ class Hero(Character):
     @abstractmethod
     def skill_effect(self, target: Character) -> int:
         """L'effet de la compétence sur une cible : chaque job écrit le sien."""
+
+    def can_cast(self, materia: Materia) -> bool:
+        """Vrai si la materia est montée sur l'équipement, et s'il reste assez de PM."""
+        return materia in self.spells and self._mp >= materia.cost
+
+    def cast(self, materia: Materia, *targets: Character) -> int:
+        """Lance le sort d'une materia : les PM une fois, puis la materia fait le travail."""
+        if not self.can_cast(materia):
+            return 0
+        self._mp -= materia.cost
+        return sum(materia.cast(self, target) for target in targets)
 
     def start_turn(self) -> None:
         """Le début du tour du héros : il quitte sa garde."""
@@ -112,13 +158,6 @@ class Hero(Character):
         if self.guarding:
             amount //= 2
         return super().take_damage(amount)
-
-    def drink_potion(self) -> int:
-        """Boit une potion ; renvoie les PV rendus, ou 0 s'il n'en reste plus."""
-        if self.potions == 0:
-            return 0
-        self.potions -= 1
-        return self.heal(Hero.POTION_HEAL)
 
     def rest(self) -> None:
         """Entre deux combats : tous les PV et les PM, même après un K.O."""
@@ -142,15 +181,3 @@ class Hero(Character):
         if levels:  # un nouveau niveau remet les PV et les PM au maximum
             self.rest()
         return levels
-
-    def equip(self, item: Equipment):
-
-        match item.slot:
-            case "arme":
-                previous = self.weapon
-                self.weapon = item
-            case _:
-                previous = self.armor
-                self.armor = item
-
-        return previous

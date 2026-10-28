@@ -138,19 +138,64 @@ class Malboro(Monster):
 
     def __init__(self, name: str | None = None, **changes: int) -> None:
         super().__init__(name, **changes)
-        self._turn = 0  # bonus ★ 1 : un tour sur trois, la Mauvaise haleine
+        self._turn = 0  # un tour sur trois, la Mauvaise haleine
 
     @property
     @override
     def warning(self) -> str | None:
-        """Bonus ★ 1 : le tour d'avant, il prend une grande inspiration."""
+        """Le tour d'avant, il prend une grande inspiration."""
         return f"{self.name} prend une grande inspiration…" if self._turn % 3 == 2 else None
 
     @override
     def act(self, heroes: Sequence[Character]) -> list[Hit]:
-        """Bonus ★ 1 : un tour sur trois, la Mauvaise haleine sur toute l'équipe."""
+        """Un tour sur trois, la Mauvaise haleine sur toute l'équipe."""
         self._turn += 1
         if self._turn % 3 != 0:
             return super().act(heroes)
         standing = [hero for hero in heroes if hero.is_alive]
         return [Hit("Mauvaise haleine", hero, self.magic_attack(hero, 10)) for hero in standing]
+
+
+class Tonberry(Monster):
+    """Le Tonberry : lent, petit, et son couteau fait très mal."""
+
+    NAME = "Tonberry"
+    HP = 3630
+    STRENGTH = 60
+    MAGIC = 13
+    DEFENSE = 26
+    RESISTANCE = 20
+    SPEED = 3
+    XP = 240
+    GIL = 200
+    WEAKNESS = "feu"  # bonus ★★ 4
+
+
+class Golem(Monster):
+    """Le Golem de cristal : une défense énorme. La magie, ou Brise-armure."""
+
+    NAME = "Golem de cristal"
+    HP = 3960
+    STRENGTH = 44
+    MAGIC = 8
+    DEFENSE = 60
+    RESISTANCE = 10
+    SPEED = 5
+    XP = 280
+    GIL = 220
+    WEAKNESS = "foudre"  # bonus ★★ 4
+
+
+class Behemoth(Monster):
+    """Le Béhémoth, boss de la Grotte des cristaux."""
+
+    NAME = "Béhémoth"
+    HP = 17325
+    STRENGTH = 52
+    MAGIC = 39
+    DEFENSE = 30
+    RESISTANCE = 24
+    SPEED = 12
+    XP = 1200
+    GIL = 1000
+    WEAKNESS = "glace"  # bonus ★★ 4

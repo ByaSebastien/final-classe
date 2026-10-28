@@ -1,8 +1,8 @@
 """Le combat : l'équipe contre un groupe de monstres, dans l'ordre de la VIT."""
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
-from final_classe.characters import Character, Hero, Monster
+from final_classe.characters import Character, Hero, Monster, Party
 from final_classe.game.creation import ask_int
 from final_classe.game.display import console, hero_line, monster_line
 
@@ -26,55 +26,121 @@ def choose_target(characters: Sequence[Character], prompt: str = "Cible") -> Cha
     return characters[ask_int(f"{prompt} : ", 1, len(characters)) - 1]
 
 
-def skill_targets(hero: Hero, heroes: list[Hero], monsters: list[Monster]) -> list[Character]:
-    """Les cibles de la compétence, d'après SKILL_TARGET."""
-    if hero.SKILL_TARGET == "ennemis":
+def choose_option(labels: list[str], prompt: str) -> int | None:
+    """Le joueur choisit dans une liste ; renvoie l'indice, ou None pour revenir au menu."""
+    for number, label in enumerate(labels, start=1):
+        console.print(f"  {number}. {label}")
+    console.print("  0. Retour")
+    choice = ask_int(f"{prompt} : ", 0, len(labels))
+    return None if choice == 0 else choice - 1
+
+
+def targets_for(kind: str, party: Party, monsters: list[Monster]) -> list[Character]:
+    """Les cibles d'une compétence, d'un sort ou d'un objet, d'après son genre de cible."""
+    if kind == "ennemis":
         return standing(monsters)
-    if hero.SKILL_TARGET == "allié":
-        return [choose_target(standing(heroes), "Allié")]
+    if kind == "allié":
+        return [choose_target(party.standing, "Allié")]
+    if kind == "K.O.":
+        return [choose_target(party.knocked_out, "Allié K.O.")] if party.knocked_out else []
     return [choose_target(standing(monsters))]
 
 
-def hero_turn(hero: Hero, heroes: list[Hero], monsters: list[Monster]) -> None:
-    """Le tour d'un héros : le joueur choisit son action."""
+def report_defeated(targets: list[Character], monsters: list[Monster]) -> None:
+    """Annonce les monstres que l'action vient de vaincre."""
+    for target in targets:
+        if target in monsters and not target.is_alive:
+            console.print(f"[green]{target.name} est vaincu ![/]")
+
+
+def attack_action(hero: Hero, party: Party, monsters: list[Monster]) -> bool:
+    """Attaquer un monstre ; renvoie True si le héros a agi."""
+    target = choose_target(standing(monsters))
+    damage = hero.attack(target)
+    console.print(f"{hero.name} attaque {target.name} : [bold]{damage}[/] dégâts.")
+    report_defeated([target], monsters)
+    return True
+
+
+def skill_action(hero: Hero, party: Party, monsters: list[Monster]) -> bool:
+    """La compétence du job ; renvoie False si les PM manquent."""
+    if not hero.can_use_skill:
+        console.print("[red]Pas assez de PM ![/]")
+        return False
+    targets = targets_for(hero.SKILL_TARGET, party, monsters)
+    value = hero.use_skill(*targets)
+    names = ", ".join(target.name for target in targets)
+    console.print(
+        hero.SKILL_TEXT.format(user=hero.name, skill=hero.SKILL_NAME, target=names, value=value)
+    )
+    report_defeated(targets, monsters)
+    return True
+
+
+def magic_action(hero: Hero, party: Party, monsters: list[Monster]) -> bool:
+    """Un sort, donné par une materia de l'équipement ; renvoie False si le joueur renonce."""
+    if not hero.spells:
+        console.print("[red]Aucune materia équipée ![/]")
+        return False
+    labels = [f"{materia.name} ({materia.cost} PM)" for materia in hero.spells]
+    index = choose_option(labels, "Sort")
+    if index is None:
+        return False
+    materia = hero.spells[index]
+    if not hero.can_cast(materia):
+        console.print("[red]Pas assez de PM ![/]")
+        return False
+    targets = targets_for(materia.TARGET, party, monsters)
+    value = hero.cast(materia, *targets)
+    names = ", ".join(target.name for target in targets)
+    effect = f"+{value} PV" if materia.TARGET == "allié" else f"{value} dégâts"
+    console.print(f"{hero.name} lance {materia.name} sur {names} : [bold]{effect}[/].")
+    report_defeated(targets, monsters)
+    return True
+
+
+def item_action(hero: Hero, party: Party, monsters: list[Monster]) -> bool:
+    """Un objet du sac ; renvoie False si le joueur renonce, ou si personne n'en a besoin."""
+    if not party.items:
+        console.print("[red]Plus aucun objet ![/]")
+        return False
+    index = choose_option([item.name for item in party.items], "Objet")
+    if index is None:
+        return False
+    item = party.items[index]
+    targets = targets_for(item.TARGET, party, monsters)
+    if not targets:
+        console.print("[red]Personne n'est K.O.[/]")
+        return False
+    value = item.use(targets[0])
+    party.items.remove(item)
+    console.print(f"{hero.name} utilise {item.name} sur {targets[0].name} : [green]+{value}[/].")
+    return True
+
+
+# Chaque action est une fonction, rangée dans un dictionnaire : le menu ne fait que choisir.
+ACTIONS: dict[int, Callable[[Hero, Party, list[Monster]], bool]] = {
+    1: attack_action,
+    2: skill_action,
+    3: magic_action,
+    4: item_action,
+}
+
+
+def hero_turn(hero: Hero, party: Party, monsters: list[Monster]) -> None:
+    """Le tour d'un héros : le joueur choisit son action, jusqu'à ce qu'il agisse."""
     hero.start_turn()
     skill = f"{hero.SKILL_NAME} ({hero.SKILL_COST} PM)"
-    potion = f"Potion (x{hero.potions})"
-    menu = f"[bold]{hero.name}[/] : 1. Attaquer  2. {skill}  3. {potion}  4. Se défendre"
+    menu = f"[bold]{hero.name}[/] : 1. Attaquer  2. {skill}  3. Magie  4. Objet  5. Se défendre"
     while True:
         console.print(menu)
-        choice = ask_int("> ", 1, 4)
-        if choice == 4:
+        choice = ask_int("> ", 1, 5)
+        if choice == 5:
             hero.defend()
             console.print(f"{hero.name} se met en garde : les coups reçus sont divisés par deux.")
             return
-        if choice == 1:
-            target = choose_target(standing(monsters))
-            damage = hero.attack(target)
-            console.print(f"{hero.name} attaque {target.name} : [bold]{damage}[/] dégâts.")
-            if not target.is_alive:
-                console.print(f"[green]{target.name} est vaincu ![/]")
+        if ACTIONS[choice](hero, party, monsters):
             return
-        if choice == 2:
-            if not hero.can_use_skill:
-                console.print("[red]Pas assez de PM ![/]")
-                continue
-            targets = skill_targets(hero, heroes, monsters)
-            value = hero.use_skill(*targets)
-            names = ", ".join(target.name for target in targets)
-            text = hero.SKILL_TEXT.format(
-                user=hero.name, skill=hero.SKILL_NAME, target=names, value=value
-            )
-            console.print(text)
-            for target in targets:
-                if target in monsters and not target.is_alive:
-                    console.print(f"[green]{target.name} est vaincu ![/]")
-            return
-        if hero.potions == 0:
-            console.print("[red]Plus de potion ![/]")
-            continue
-        console.print(f"{hero.name} boit une potion : [green]+{hero.drink_potion()} PV[/]")
-        return
 
 
 def monster_turn(monster: Monster, heroes: list[Hero]) -> None:
@@ -88,8 +154,9 @@ def monster_turn(monster: Monster, heroes: list[Hero]) -> None:
         console.print(f"[yellow]{monster.warning}[/]")
 
 
-def fight(heroes: list[Hero], monsters: list[Monster]) -> bool:
+def fight(party: Party, monsters: list[Monster]) -> bool:
     """Le combat d'équipe ; renvoie True si l'équipe gagne."""
+    heroes = party.heroes
     names = ", ".join(monster.name for monster in monsters)
     console.print(f"\n[bold red]Combat contre {names}[/]")
     turn = 0
@@ -102,15 +169,15 @@ def fight(heroes: list[Hero], monsters: list[Monster]) -> bool:
             console.print(monster_line(monster))
         order = sorted([*heroes, *monsters], key=by_speed, reverse=True)
         queue = " → ".join(character.name for character in standing(order))
-        console.print(f"[dim]Ordre du tour : {queue}[/]")  # bonus ★ 2
+        console.print(f"[dim]Ordre du tour : {queue}[/]")
         for character in order:
             if not character.is_alive or not standing(heroes) or not standing(monsters):
                 continue
             # Pas une cascade de cas par espèce : on sépare les deux camps.
             # Pour un héros, le joueur décide ; un monstre décide seul.
             if isinstance(character, Hero):
-                hero_turn(character, heroes, monsters)
-            elif isinstance(character, Monster):
+                hero_turn(character, party, monsters)
+            else:
                 monster_turn(character, heroes)
     won = bool(standing(heroes))
     console.print("\n[bold green]Victoire ![/]" if won else "\n[bold red]L'équipe est K.O…[/]")

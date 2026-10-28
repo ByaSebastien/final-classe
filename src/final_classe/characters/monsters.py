@@ -21,6 +21,7 @@ class Monster(Character):
     SPEED = 10
     XP = 0
     GIL = 0
+    WEAKNESS: str | None = None  # bonus ★★ 4 : l'élément qu'il craint
 
     def __init__(self, name: str | None = None, **changes: int) -> None:
         stats = {
@@ -32,7 +33,7 @@ class Monster(Character):
             "resistance": self.RESISTANCE,
             "speed": self.SPEED,
         }
-        stats.update(changes)  # bonus ★★★ 5 : une variante, Wolf("Loup alpha", hp=600)
+        stats.update(changes)  # une variante, Wolf("Loup alpha", hp=600)
         super().__init__(name or self.NAME, **stats)
         self.xp = self.XP
         self.gil = self.GIL
@@ -42,6 +43,11 @@ class Monster(Character):
     def title(self) -> str:
         """Un monstre n'a pas de job."""
         return "Monstre"
+
+    @override
+    def damage_multiplier(self, element: str | None) -> int:
+        """Bonus ★★ 4 : les dégâts doublent sur la faiblesse du monstre."""
+        return 2 if element is not None and element == self.WEAKNESS else 1
 
     @property
     def warning(self) -> str | None:
